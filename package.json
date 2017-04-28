@@ -1,0 +1,39 @@
+{
+  "name": "ws-nuget-plugin",
+  "version": "0.0.1",
+  "description": "Whitesource Nuget plugin",
+  "preferGlobal": true,
+  "bin": {
+    "ws-nuget-plugin": "./bin/todo change to name to the final executable file"
+  },
+  "homepage": "https://github.com/whitesource/nuget-plugin",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/whitesource/nuget-plugin.git"
+  },
+  "engines": {
+    "node": "figure out if we want to include this field, if so what should it be"
+  },
+  "main": "figure this our ",
+  "keywords": [
+    "whitesource",
+    "nuget"
+  ],
+  "author": {
+    "name": "Yossi Weinberg",
+    "email": "yossi.weinberg@whitesourcesoftware.com",
+    "url": "https://www.whitesourcesoftware.com/"
+  },
+  "licenses": [
+    {
+      "type": "Apache-2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    }
+  ],
+  "devDependencies": {
+
+  },
+  "dependencies": {
+
+  }
+}
