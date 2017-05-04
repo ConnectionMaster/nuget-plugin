@@ -4,16 +4,17 @@
 
 // todo check what this is for
 var Utilities = exports;
-exports.constructor = function Utilities() {
-};
+exports.constructor = function Utilities() {};
 
 var fs = require('fs'),
     path = require('path'),
     checksum = require('checksum'),
     download = require('download'),
     request = require('request'),
-    loadJsonFile = require('load-json-file'),
-    rimraf = require('rimraf');
+    parseString = require('xml2js').parseString,
+    rimraf = require('rimraf'),
+    loadJsonFile = require('load-json-file');
+
 
 Utilities.mkdir = function (fullPath) {
     if (!fs.existsSync(fullPath)) {
@@ -59,8 +60,13 @@ Utilities.downloadFile = function (url, filename, destination, callback) {
         });
 };
 
-Utilities.loadJsonFile = function () {
+Utilities.loadJsonFile = function (path) {
+    return loadJsonFile.sync(path);
+};
 
+Utilities.xmlToJson = function(path, callback) {
+    var xmlFile = fs.readFileSync(path, 'utf8');
+    parseString(xmlFile, callback);
 };
 
 Utilities.postRequest = function (url, type, requestBody, onSuccess, onError) {
