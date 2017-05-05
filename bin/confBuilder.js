@@ -1,14 +1,17 @@
 /**
- * Created by Yossi on 5/4/2017.
+ * Created by Yossi.Weinberg on 5/4/2017.
  */
 
 var ConfBuilder = exports;
 exports.constructor = function ConfBuilder(){};
 
+var Utilities = require('./utilities');
+var logger = Utilities.getLogger();
+
 ConfBuilder.createPostRequestBody = function(conf, pluginAction) {
     var requestBody = {
-        'agent' : 'nuget-plugin',
-        'agentVersion' : '1.0',
+        'agent': 'nuget-plugin',
+        'agentVersion': '1.0',
         'timeStamp': new Date().getTime()
     };
 
@@ -19,10 +22,23 @@ ConfBuilder.createPostRequestBody = function(conf, pluginAction) {
     if (conf.requesterEmail) {
         requestBody.requesterEmail = conf.requesterEmail;
     }
-
     requestBody.forceCheckAllDependencies = conf.forceCheckAllDependencies ? conf.forceCheckAllDependencies : false;
 
     return requestBody;
+};
+
+ConfBuilder.createGlobalConfiguration = function (conf) {
+    var globalConf = {
+        'wssUrl': 'http://localhost:8081/agent',
+        'repositoryUrl': 'https://api.nuget.org/v3-flatcontainer/{0}/{1}/{0}.{1}.nupkg',
+        'devDependencies': false
+    };
+
+    globalConf.wssUrl = conf.wssUrl ? conf.wssUrl : globalConf.wssUrl;
+    globalConf.devDependencies = conf.devDependencies ? conf.devDependencies : globalConf.devDependencies;
+    globalConf.repositoryUrl = conf.repositoryUrl ? conf.repositoryUrl : globalConf.repositoryUrl;
+
+    return globalConf;
 };
 
 ConfBuilder.processProjectIdentification = function(conf) {
@@ -34,7 +50,7 @@ ConfBuilder.processProjectIdentification = function(conf) {
     // validate and add project token
     if (conf.projectToken) {
         if (conf.projectToken.length !== 36) {
-            console.log('Project token should be 36 characters long, token will be ignored.');
+            logger.info('Project token should be 36 characters long, token will be ignored.');
         } else {
             agentProjectInfo.projectToken = conf.projectToken;
         }
@@ -42,7 +58,7 @@ ConfBuilder.processProjectIdentification = function(conf) {
 
     // if valid token and project name then ignore project name otherwise use it
     if ((conf.projectToken && conf.projectToken.length === 36) && conf.projectName) {
-        console.log('Can\'t use both project token and project name in configuration, project name will be ignored.');
+        logger.info('Can\'t use both project token and project name in configuration, project name will be ignored.');
     } else {
         if (conf.projectName) {
             agentProjectInfo.coordinates.artifactId = conf.projectName;
@@ -61,11 +77,11 @@ ConfBuilder.processProjectIdentification = function(conf) {
 function processOrgToken(requestBody, conf) {
     // validate & add org token
     if (!conf.apiKey) {
-        console.log('#### ERROR: Organizational api key is not configured, please update the configuration file. Exiting process...');
+        logger.error('Organizational api key is not configured, please update the configuration file. Exiting process...');
         process.exit(0);
     }
     if (conf.apiKey.length !== 36) {
-        console.log('#### ERROR: Organizational api key should be 36 characters long. Exiting process...');
+        logger.error('Organizational api key should be 36 characters long. Exiting process...');
         process.exit(0);
     }
     requestBody.token = conf.apiKey;
@@ -73,7 +89,7 @@ function processOrgToken(requestBody, conf) {
 
 function processRequestAction(requestBody, pluginAction) {
     if (!pluginAction) {
-        console.log('#### No plugin action is specified, defaulting to UPDATE action. To change action please refer to the documentation.');
+        logger.info('No plugin action is specified, defaulting to UPDATE action. To change action please refer to the documentation.');
         requestBody.type = 'UPDATE';
     } else {
         requestBody.type = pluginAction;
@@ -84,7 +100,7 @@ function processProductToken(requestBody, conf) {
     // validate and add product token
     if (conf.productToken) {
         if (conf.productToken.length !== 36) {
-            console.log('Product token should be 36 characters long, token will be ignored.');
+            logger.info('Product token should be 36 characters long, token will be ignored.');
         } else {
             requestBody.productToken = conf.productToken;
         }
@@ -92,7 +108,7 @@ function processProductToken(requestBody, conf) {
 
     // if valid token and product name then ignore product name otherwise use it
     if ((conf.productToken && conf.productToken.length === 36) && conf.productName) {
-        console.log('Can\'t use both product token and product name in configuration, product name will be ignored.');
+        logger.info('Can\'t use both product token and product name in configuration, product name will be ignored.');
     } else {
         if (conf.productName) {
             requestBody.product = conf.productName;

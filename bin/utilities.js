@@ -13,15 +13,29 @@ var fs = require('fs'),
     request = require('request'),
     parseString = require('xml2js').parseString,
     rimraf = require('rimraf'),
-    loadJsonFile = require('load-json-file');
+    winston = require('winston');
 
+var logger = null;
+
+Utilities.getLogger = function () {
+    if (logger === null) {
+        logger = new winston.Logger({
+            transports: [
+                new winston.transports.Console({
+                    timestamp: true
+                })
+            ]
+        });
+    }
+    return logger;
+};
 
 Utilities.mkdir = function (fullPath) {
     if (!fs.existsSync(fullPath)) {
         try {
             fs.mkdirSync(fullPath);
         } catch (e) {
-            console.log('Unable to create folder in path: ' + fullPath + '.\n' + e + '\nExiting process...');
+            logger.error('Unable to create folder in path: ' + fullPath + '.\n' + e + '\nExiting process...');
             process.exit(0);
         }
     }
@@ -31,7 +45,7 @@ Utilities.rm = function (path) {
     var rmOptions = {"disableGlob" : true};
     rimraf(path, rmOptions, function (err) {
         if (err) {
-            console.log('Unable to delete tmp folder ' + path + '\n' + err);
+            logger.debug('Unable to delete tmp folder ' + path + '\n' + err);
         }
     });
 };
@@ -39,9 +53,9 @@ Utilities.rm = function (path) {
 Utilities.calculateSha1 = function (file, callback) {
     checksum.file(file, function (err, sha1) {
         if (err) {
-            console.log('Unable to calculate sha1 for ' + file + '\n' + err);
+            logger.debug('Unable to calculate sha1 for ' + file + '\n' + err);
         } else {
-            console.log('file ' + file + ' sha1: ' + sha1);
+            logger.info('file ' + file + ' sha1: ' + sha1);
             callback(sha1);
         }
     })
@@ -61,7 +75,8 @@ Utilities.downloadFile = function (url, filename, destination, callback) {
 };
 
 Utilities.loadJsonFile = function (path) {
-    return loadJsonFile.sync(path);
+    var file = fs.readFileSync(path);
+    return JSON.parse(file);
 };
 
 Utilities.xmlToJson = function(path, callback) {
