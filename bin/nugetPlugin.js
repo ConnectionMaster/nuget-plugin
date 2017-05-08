@@ -11,82 +11,111 @@ var format = require('string-format'),
     confBuilder = require('./confBuilder'),
     cmd = require('./cmdArgs');
 
-
+/*------------------*/
 /* Global Variables */
+/*------------------*/
 var logger;
 var cmdArgs;
 var tmpFolderPath;
-var configurationFromFile;
+var confFile;
 var globalConf;
-var repositoryUrlPattern = 'https://api.nuget.org/v3-flatcontainer/{0}/{1}/{0}.{1}.nupkg';
-
-var dependencies = [];
-var agentProjectInfos = [];
-var requestBody;
 
 run();
 
 function run() {
     initializeGlobalVariables();
 
-    requestBody = confBuilder.createPostRequestBody(configurationFromFile, cmdArgs.action);
-    globalConf = confBuilder.createGlobalConfiguration(configurationFromFile);
+    // Parse & validate conf file and create partial request params -
+    // this is done before everything else to make sure all params are valid before the actual plugin execution
+    var partialRequestBody = confBuilder.createPostRequestBody(confFile, cmdArgs.action);
+    var projectInfos = [confBuilder.processProjectIdentification(confFile, cmdArgs.nuget_config)];
 
-    agentProjectInfos.push(confBuilder.processProjectIdentification(configurationFromFile));
-    getLinksFromXmlConfigFile(cmdArgs.nuget_config, onLinksAction);
+    // decide how to parse nuget dependencies file and run plugin
+    decideParseMethod(cmdArgs.nuget_config, partialRequestBody, projectInfos);
 }
 
+/**
+ * Initialize all variables that should have global access
+ */
 function initializeGlobalVariables() {
     logger = utilities.getLogger();
     cmdArgs = cmd.getCmdArgs();
     tmpFolderPath = osTmpdir() + path.sep + 'Ws-nuget-temp';
 
     try {
-        configurationFromFile = utilities.loadJsonFile(cmdArgs.ws_config);
+        confFile = utilities.loadJsonFile(cmdArgs.ws_config);
     } catch (err) {
         logger.error('Unable to read Ws Nuget configuration file. Exiting...\n' + err);
         process.exit(0);
     }
+
+    globalConf = confBuilder.createGlobalConfiguration(confFile);
 }
 
-// method to parse packageConfig.xml file
-function getLinksFromXmlConfigFile(xmlPath, onAllLinks) {
+/**
+ * Currently only supports parsing packages.config files
+ */
+function decideParseMethod(filePath, partialRequestBody, projectInfos) {
+    if (filePath.endsWith('.config')) {
+        parseConfigXml(filePath, partialRequestBody, projectInfos, onReadyLinks)
+    } else {
+        // other files parsing
+    }
+}
+
+/**
+ * Parse packages.config xml file to json, extract all nuget packages (pkg name and version) and create download links
+ */
+function parseConfigXml(xmlPath, partialRequestBody, projectInfos, callback) {
     var downloadLinks = [];
     utilities.xmlToJson(xmlPath, function (err, jsonConfig) {
         if (err) {
             logger.error('Unable to read ' + xmlPath + ' configuration file. Exiting...');
             process.exit(0);
         } else {
+            // Json object from xml has the following format
+            // {"packages":{"package":[{"$":{"id":"","version":"","targetFramework":""}},{"$":{"id":"","version":"","targetFramework":""}}]}}
             if (jsonConfig.packages) {
                 if (jsonConfig.packages.package) {
                     var nugetPackages = jsonConfig.packages.package;
                     for (var i = 0; i < nugetPackages.length; i++) {
                         if (nugetPackages[i]['$']) {
                             var pkg = nugetPackages[i]['$'];
-                            if (pkg.developmentDependency && globalConf.devDependencies) {
+                            if (pkg.developmentDependency && !globalConf.devDependencies) {
                                 continue;
                             }
-                            var downloadUrl = format(repositoryUrlPattern, pkg.id.toLowerCase(), pkg.version.toLowerCase());
+                            var downloadUrl = format(globalConf.repositoryUrl, pkg.id.toLowerCase(), pkg.version.toLowerCase());
                             downloadLinks.push(downloadUrl);
                         }
                     }
-                    onAllLinks(downloadLinks);
+                    // After all download links collected and parsed download them
+                    callback(partialRequestBody, projectInfos, downloadLinks);
                 } else {
-                    //todo deal with
+                    logger.error('Packages.config file from ' + xmlPath + ' doesn\'t contain a packages tag. ' +
+                        'Make sure to the file is well formatted. Exiting...');
+                    process.exit(0);
                 }
             } else {
-                //todo deal with
+                logger.error('Packages.config file from ' + xmlPath + ' doesn\'t contain a packages tag. ' +
+                    'Make sure to the file is well formatted. Exiting...');
+                process.exit(0);
             }
         }
     });
 }
 
-function onLinksAction(downloadLinks) {
+/**
+ * Download all pkgs, calculate sha1 and send request
+ */
+function onReadyLinks(PartialRequestBody, projectInfos, downloadLinks) {
     utilities.mkdir(tmpFolderPath);
-    var asyncDownloadCounter = downloadLinks.length;
-    for (var i =0; i < asyncDownloadCounter; i++) {
+    var asyncCounter = downloadLinks.length; // counter to wait for all async download actions to be done
+    var dependencies = [];
+
+    for (var i =0; i < downloadLinks.length; i++) {
         var link = downloadLinks[i];
         var filename = link.substring(link.lastIndexOf('/') + 1);
+
         utilities.downloadFile(link, filename, tmpFolderPath, function (err, name, file) {
             if (err) { // todo decide on log level for err
                 if (err.statusCode === 404) {
@@ -94,33 +123,43 @@ function onLinksAction(downloadLinks) {
                 } else {
                     logger.info('Error downloading ' + name + ' with error code ' + err.statusCode);
                 }
+                --asyncCounter; // reduced even if no download is available - otherwise process will never continue
             } else {
-                createDependencyInfo(file);
-            }
-
-            if (--asyncDownloadCounter === 0) {
-                utilities.rm(tmpFolderPath);
-                sendRequestToServer();
+                createDependencyInfo(PartialRequestBody, projectInfos, dependencies, file, --asyncCounter, onDependenciesReady);
             }
         });
     }
 }
 
-function createDependencyInfo(file) {
+/**
+ * Once all files downloaded and sha1 calculated send request
+ */
+function createDependencyInfo(partialRequestBody, agentProjectInfos, dependencies, file, asyncDownloadCounter, callback) {
     utilities.calculateSha1(file, function (sha1) {
-        dependencies.push({
+        var dependency = {
             'artifactId' : file.substring(file.lastIndexOf('/') + 1),
             'sha1' : sha1
-        });
+        };
+
+        dependencies.push(dependency);
+
+        if (asyncDownloadCounter === 0) {
+            callback(partialRequestBody, agentProjectInfos, dependencies)
+        }
     });
 }
 
-function sendRequestToServer() {
+function onDependenciesReady(partialRequestBody, projectInfos, dependencies) {
+    utilities.rm(tmpFolderPath);
+    sendRequestToServer(partialRequestBody, projectInfos, dependencies);
+}
+
+function sendRequestToServer(requestBody, projectInfos, dependencies) {
     if (requestBody) {
-        agentProjectInfos[0].dependencies = dependencies;
+        projectInfos[0].dependencies = dependencies;
         var requestBodyStringified = queryString.stringify(requestBody);
-        requestBodyStringified += "&diff=" + JSON.stringify(agentProjectInfos);
-        utilities.postRequest('http://localhost:8081/agent', 'POST', requestBodyStringified, function (responseBody) {
+        requestBodyStringified += "&diff=" + JSON.stringify(projectInfos);
+        utilities.postRequest(globalConf.wssUrl, 'POST', requestBodyStringified, function (responseBody) {
             console.log(responseBody);
         }, function (err) {
             console.log(err);

@@ -19,6 +19,10 @@ const cmdArgsDefinitions = [
 var logger = utilities.getLogger();
 var cmd = commandLineArgs(cmdArgsDefinitions); // load the actual cmd line arguments
 
+/**
+ * Parse and validate cmd args
+ * @returns object with all args
+ */
 CmdArgs.getCmdArgs = function () {
     validateCmdArgs();
     return cmd;

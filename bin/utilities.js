@@ -17,6 +17,10 @@ var fs = require('fs'),
 
 var logger = null;
 
+/**
+ * Create logger or return if already initialized
+ * @returns winston logger object
+ */
 Utilities.getLogger = function () {
     if (logger === null) {
         logger = new winston.Logger({
@@ -55,7 +59,7 @@ Utilities.calculateSha1 = function (file, callback) {
         if (err) {
             logger.debug('Unable to calculate sha1 for ' + file + '\n' + err);
         } else {
-            logger.info('file ' + file + ' sha1: ' + sha1);
+            logger.info('file ' + file + ' sha1: ' + sha1); // todo decide level of logger
             callback(sha1);
         }
     })

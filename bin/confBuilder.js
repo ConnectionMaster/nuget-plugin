@@ -41,7 +41,7 @@ ConfBuilder.createGlobalConfiguration = function (conf) {
     return globalConf;
 };
 
-ConfBuilder.processProjectIdentification = function(conf) {
+ConfBuilder.processProjectIdentification = function(conf, confFileName) {
     var agentProjectInfo = {
         'projectToken': undefined,
         'coordinates': {}
@@ -67,7 +67,8 @@ ConfBuilder.processProjectIdentification = function(conf) {
             }
         } else { // if no name or token give default name todo maybe get name according to filename
             if(!agentProjectInfo.projectToken) {
-                agentProjectInfo.coordinates.artifactId = 'My Project 1';
+                var nameFromFile = confFileName.substring(confFileName.lastIndexOf('\\') + 1);
+                agentProjectInfo.coordinates.artifactId = nameFromFile;
             }
         }
     }
