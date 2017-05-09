@@ -26,11 +26,18 @@ Utilities.getLogger = function () {
         logger = new winston.Logger({
             transports: [
                 new winston.transports.Console({
-                    timestamp: true
+                    timestamp: true,
+                    level: 'info' // min log level to show - as defined by npm logging levels (see https://github.com/winstonjs/winston)
+                }),
+                new (winston.transports.File)({
+                    timestamp: true,
+                    filename: __dirname + '\\ios.log',
+                    level: 'debug'
                 })
             ]
         });
     }
+    logger.cli();
     return logger;
 };
 
@@ -38,6 +45,7 @@ Utilities.mkdir = function (fullPath) {
     if (!fs.existsSync(fullPath)) {
         try {
             fs.mkdirSync(fullPath);
+            logger.debug('Created directory ' + fullPath);
         } catch (e) {
             logger.error('Unable to create folder in path: ' + fullPath + '.\n' + e + '\nExiting process...');
             process.exit(0);
@@ -49,7 +57,10 @@ Utilities.rm = function (path) {
     var rmOptions = {"disableGlob" : true};
     rimraf(path, rmOptions, function (err) {
         if (err) {
-            logger.debug('Unable to delete tmp folder ' + path + '\n' + err);
+            logger.warn('Unable to delete folder ' + path + '\n' + err);
+        }
+        else {
+            logger.debug('Remove folder ' + path);
         }
     });
 };
@@ -57,9 +68,9 @@ Utilities.rm = function (path) {
 Utilities.calculateSha1 = function (file, callback) {
     checksum.file(file, function (err, sha1) {
         if (err) {
-            logger.debug('Unable to calculate sha1 for ' + file + '\n' + err);
+            logger.verbose('Unable to calculate sha1 for ' + file + '\n' + err);
         } else {
-            logger.info('file ' + file + ' sha1: ' + sha1); // todo decide level of logger
+            logger.verbose('file ' + file + ' sha1: ' + sha1);
             callback(sha1);
         }
     })
@@ -70,11 +81,11 @@ Utilities.downloadFile = function (url, filename, destination, callback) {
             var fullFilePath = destination + path.sep + filename;
             fs.writeFileSync(fullFilePath, data);
             if (fs.statSync(fullFilePath).isFile()) {
-                callback(null, filename, fullFilePath);
+                callback(null, url, filename, fullFilePath);
             }
         },
         function (err) {
-            callback(err, filename);
+            callback(err, url, filename);
         });
 };
 
@@ -88,7 +99,7 @@ Utilities.xmlToJson = function(path, callback) {
     parseString(xmlFile, callback);
 };
 
-Utilities.postRequest = function (url, type, requestBody, onSuccess, onError) {
+Utilities.postRequest = function (url, type, requestBody, onSuccess) {
     var options = {
         url : url,
         timeout : 1800000,
@@ -102,9 +113,12 @@ Utilities.postRequest = function (url, type, requestBody, onSuccess, onError) {
         options.method = 'get';
     }
 
+    logger.debug('Request options:\\n' + JSON.stringify(options));
+
     request(options, function (err, entireResponse, responseBody) {
-        if (err && onError) {
-            onError(err, requestBody, entireResponse);
+        logger.debug('Http entire response:\n' + JSON.stringify(entireResponse));
+        if (err) {
+            logger.error('Http request failed\n' + err);
         }
         if (entireResponse) {
             var statusCode = entireResponse.statusCode;
@@ -113,7 +127,7 @@ Utilities.postRequest = function (url, type, requestBody, onSuccess, onError) {
                     onSuccess(responseBody);
                 }
             } else {
-                onError('Unable to send request') // todo update msg
+                logger.error('Http request failed with statues code: ' + statusCode)
             }
         }
     });

@@ -24,6 +24,7 @@ ConfBuilder.createPostRequestBody = function(conf, pluginAction) {
     }
     requestBody.forceCheckAllDependencies = conf.forceCheckAllDependencies ? conf.forceCheckAllDependencies : false;
 
+    logger.debug('Partial post request after validation:\\n' + JSON.stringify(requestBody));
     return requestBody;
 };
 
@@ -38,6 +39,7 @@ ConfBuilder.createGlobalConfiguration = function (conf) {
     globalConf.devDependencies = conf.devDependencies ? conf.devDependencies : globalConf.devDependencies;
     globalConf.repositoryUrl = conf.repositoryUrl ? conf.repositoryUrl : globalConf.repositoryUrl;
 
+    logger.debug('Global configuration after validation:\\n' + JSON.stringify(globalConf));
     return globalConf;
 };
 
@@ -50,7 +52,7 @@ ConfBuilder.processProjectIdentification = function(conf, confFileName) {
     // validate and add project token
     if (conf.projectToken) {
         if (conf.projectToken.length !== 36) {
-            logger.info('Project token should be 36 characters long, token will be ignored.');
+            logger.warn('Project token should be 36 characters long, token will be ignored.');
         } else {
             agentProjectInfo.projectToken = conf.projectToken;
         }
@@ -58,20 +60,21 @@ ConfBuilder.processProjectIdentification = function(conf, confFileName) {
 
     // if valid token and project name then ignore project name otherwise use it
     if ((conf.projectToken && conf.projectToken.length === 36) && conf.projectName) {
-        logger.info('Can\'t use both project token and project name in configuration, project name will be ignored.');
+        logger.warn('Can\'t use both project token and project name in configuration, project name will be ignored.');
     } else {
         if (conf.projectName) {
             agentProjectInfo.coordinates.artifactId = conf.projectName;
             if (conf.projectVersion) {
                 agentProjectInfo.coordinates.version = conf.projectVersion;
             }
-        } else { // if no name or token give default name todo maybe get name according to filename
+        } else { // if no name or token give name as default according to nuget conf filename todo update what if conf name is the same among projects?
             if(!agentProjectInfo.projectToken) {
                 var nameFromFile = confFileName.substring(confFileName.lastIndexOf('\\') + 1);
                 agentProjectInfo.coordinates.artifactId = nameFromFile;
             }
         }
     }
+    logger.debug('Agent project info after validation:\\n' + JSON.stringify(agentProjectInfo));
     return agentProjectInfo;
 };
 
@@ -90,7 +93,7 @@ function processOrgToken(requestBody, conf) {
 
 function processRequestAction(requestBody, pluginAction) {
     if (!pluginAction) {
-        logger.info('No plugin action is specified, defaulting to UPDATE action. To change action please refer to the documentation.');
+        logger.warn('No plugin action is specified, defaulting to UPDATE action. To change action please refer to the documentation.');
         requestBody.type = 'UPDATE';
     } else {
         requestBody.type = pluginAction;
@@ -101,7 +104,7 @@ function processProductToken(requestBody, conf) {
     // validate and add product token
     if (conf.productToken) {
         if (conf.productToken.length !== 36) {
-            logger.info('Product token should be 36 characters long, token will be ignored.');
+            logger.warn('Product token should be 36 characters long, token will be ignored.');
         } else {
             requestBody.productToken = conf.productToken;
         }
@@ -109,7 +112,7 @@ function processProductToken(requestBody, conf) {
 
     // if valid token and product name then ignore product name otherwise use it
     if ((conf.productToken && conf.productToken.length === 36) && conf.productName) {
-        logger.info('Can\'t use both product token and product name in configuration, product name will be ignored.');
+        logger.warn('Can\'t use both product token and product name in configuration, product name will be ignored.');
     } else {
         if (conf.productName) {
             requestBody.product = conf.productName;

@@ -17,7 +17,12 @@ const cmdArgsDefinitions = [
 ];
 
 var logger = utilities.getLogger();
-var cmd = commandLineArgs(cmdArgsDefinitions); // load the actual cmd line arguments
+try {
+    var cmd = commandLineArgs(cmdArgsDefinitions); // load the actual cmd line arguments
+} catch (err) {
+    logger.error('Unable to load cmd arguments ' + err + '\\nExiting...');
+    process.exit(0);
+}
 
 /**
  * Parse and validate cmd args
@@ -25,6 +30,7 @@ var cmd = commandLineArgs(cmdArgsDefinitions); // load the actual cmd line argum
  */
 CmdArgs.getCmdArgs = function () {
     validateCmdArgs();
+    logger.debug('Cmd params after validation:\\n' + JSON.stringify(cmd));
     return cmd;
 };
 
@@ -44,7 +50,7 @@ function validateCmdArgs() {
 
     if (cmd.nuget_config) {
         if (!fs.existsSync(cmd.nuget_config)) {
-            logger.info('Nuget packaging configuration file ' + cmd.nuget_config + ' doesn\'t exist. Exiting...')
+            logger.error('Nuget packaging configuration file ' + cmd.nuget_config + ' doesn\'t exist. Exiting...')
             // process.exit(0); //todo uncomment in production
         }
     } else {

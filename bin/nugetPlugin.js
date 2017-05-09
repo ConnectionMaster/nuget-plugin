@@ -7,6 +7,7 @@ var format = require('string-format'),
     path = require('path'),
     fs = require('fs'),
     queryString = require('querystring'),
+    prettyJson = require('prettyjson'),
     utilities = require('./utilities'),
     confBuilder = require('./confBuilder'),
     cmd = require('./cmdArgs');
@@ -44,6 +45,7 @@ function initializeGlobalVariables() {
 
     try {
         confFile = utilities.loadJsonFile(cmdArgs.ws_config);
+        logger.debug('Configuration file:\\n' + JSON.stringify(confFile));
     } catch (err) {
         logger.error('Unable to read Ws Nuget configuration file. Exiting...\n' + err);
         process.exit(0);
@@ -73,8 +75,10 @@ function parseConfigXml(xmlPath, partialRequestBody, projectInfos, callback) {
             logger.error('Unable to read ' + xmlPath + ' configuration file. Exiting...');
             process.exit(0);
         } else {
-            // Json object from xml has the following format
-            // {"packages":{"package":[{"$":{"id":"","version":"","targetFramework":""}},{"$":{"id":"","version":"","targetFramework":""}}]}}
+            // Json object from xml has the following format:
+            // {"packages":{"package":
+            // [{"$":{"id":"","version":"","targetFramework":""}},{"$":{"id":"","version":"","targetFramework":""}}]}}
+            logger.debug('Xml config file ' + xmlPath + ' as json:\\n' + JSON.stringify(jsonConfig));
             if (jsonConfig.packages) {
                 if (jsonConfig.packages.package) {
                     var nugetPackages = jsonConfig.packages.package;
@@ -111,21 +115,23 @@ function onReadyLinks(PartialRequestBody, projectInfos, downloadLinks) {
     utilities.mkdir(tmpFolderPath);
     var asyncCounter = downloadLinks.length; // counter to wait for all async download actions to be done
     var dependencies = [];
+    var missedDependencies = [];
 
     for (var i =0; i < downloadLinks.length; i++) {
         var link = downloadLinks[i];
         var filename = link.substring(link.lastIndexOf('/') + 1);
 
-        utilities.downloadFile(link, filename, tmpFolderPath, function (err, name, file) {
-            if (err) { // todo decide on log level for err
+        utilities.downloadFile(link, filename, tmpFolderPath, function (err, url, name, file) {
+            if (err) {
                 if (err.statusCode === 404) {
-                    logger.info('Unable to find ' + name + ' in the public nuget repository');
+                    logger.debug('Unable to find ' + name + ' in the public nuget repository');
                 } else {
-                    logger.info('Error downloading ' + name + ' with error code ' + err.statusCode);
+                    logger.debug('Error downloading ' + name + ' with error code ' + err.statusCode);
                 }
                 --asyncCounter; // reduced even if no download is available - otherwise process will never continue
+                missedDependencies.push({filename: name, link: url})
             } else {
-                createDependencyInfo(PartialRequestBody, projectInfos, dependencies, file, --asyncCounter, onDependenciesReady);
+                createDependencyInfo(PartialRequestBody, projectInfos, dependencies, missedDependencies, file, --asyncCounter, onDependenciesReady);
             }
         });
     }
@@ -134,7 +140,7 @@ function onReadyLinks(PartialRequestBody, projectInfos, downloadLinks) {
 /**
  * Once all files downloaded and sha1 calculated send request
  */
-function createDependencyInfo(partialRequestBody, agentProjectInfos, dependencies, file, asyncDownloadCounter, callback) {
+function createDependencyInfo(partialRequestBody, agentProjectInfos, dependencies, missedDependencies, file, asyncDownloadCounter, callback) {
     utilities.calculateSha1(file, function (sha1) {
         var dependency = {
             'artifactId' : file.substring(file.lastIndexOf('/') + 1),
@@ -144,6 +150,8 @@ function createDependencyInfo(partialRequestBody, agentProjectInfos, dependencie
         dependencies.push(dependency);
 
         if (asyncDownloadCounter === 0) {
+            logger.info('Unable to resolve the following nuget packages' + prettyJson.render(missedDependencies));
+            logger.debug('Collected dependencies are: ' + JSON.stringify(dependencies));
             callback(partialRequestBody, agentProjectInfos, dependencies)
         }
     });
@@ -155,17 +163,10 @@ function onDependenciesReady(partialRequestBody, projectInfos, dependencies) {
 }
 
 function sendRequestToServer(requestBody, projectInfos, dependencies) {
-    if (requestBody) {
-        projectInfos[0].dependencies = dependencies;
-        var requestBodyStringified = queryString.stringify(requestBody);
-        requestBodyStringified += "&diff=" + JSON.stringify(projectInfos);
-        utilities.postRequest(globalConf.wssUrl, 'POST', requestBodyStringified, function (responseBody) {
-            console.log(responseBody);
-        }, function (err) {
-            console.log(err);
-        })
-    } else {
-        // todo deal with error properly
-        logger.error("no request body ---- errrrrorrr "); //todo remove in production
-    }
+    projectInfos[0].dependencies = dependencies;
+    var requestBodyStringified = queryString.stringify(requestBody);
+    requestBodyStringified += "&diff=" + JSON.stringify(projectInfos);
+    utilities.postRequest(globalConf.wssUrl, 'POST', requestBodyStringified, function (responseBody) {
+        logger.info('Request was successful ' + prettyJson.render(responseBody));
+    })
 }
