@@ -3,7 +3,6 @@
   "version": "0.0.1",
   "description": "Whitesource Nuget plugin",
   "preferGlobal": true,
-  "main":"./bin/nugetPlugin.js",
   "bin": {
     "ws-nuget": "./bin/nugetPlugin.js"
   },
