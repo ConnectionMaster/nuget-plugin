@@ -151,7 +151,9 @@ function createDependencyInfo(partialRequestBody, agentProjectInfos, dependencie
         dependencies.push(dependency);
 
         if (asyncDownloadCounter === 0) {
-            logger.info('Unable to resolve the following nuget packages' + prettyJson.render(missedDependencies));
+            if (missedDependencies.length > 0) {
+                logger.warn('Unable to resolve the following nuget packages:\n' + prettyJson.render(missedDependencies));
+            }
             logger.debug('Collected dependencies are: ' + JSON.stringify(dependencies));
             callback(partialRequestBody, agentProjectInfos, dependencies)
         }

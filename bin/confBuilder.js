@@ -24,7 +24,7 @@ ConfBuilder.createPostRequestBody = function(conf, pluginAction) {
     }
     requestBody.forceCheckAllDependencies = conf.forceCheckAllDependencies ? conf.forceCheckAllDependencies : false;
 
-    logger.debug('Partial post request after validation:\\n' + JSON.stringify(requestBody));
+    logger.debug('Partial post request after validation: ' + JSON.stringify(requestBody));
     return requestBody;
 };
 
@@ -39,7 +39,7 @@ ConfBuilder.createGlobalConfiguration = function (conf) {
     globalConf.devDependencies = conf.devDependencies ? conf.devDependencies : globalConf.devDependencies;
     globalConf.repositoryUrl = conf.repositoryUrl ? conf.repositoryUrl : globalConf.repositoryUrl;
 
-    logger.debug('Global configuration after validation:\\n' + JSON.stringify(globalConf));
+    logger.debug('Global configuration after validation: ' + JSON.stringify(globalConf));
     return globalConf;
 };
 
@@ -74,7 +74,7 @@ ConfBuilder.processProjectIdentification = function(conf, confFileName) {
             }
         }
     }
-    logger.debug('Agent project info after validation:\\n' + JSON.stringify(agentProjectInfo));
+    logger.debug('Agent project info after validation: ' + JSON.stringify(agentProjectInfo));
     return agentProjectInfo;
 };
 

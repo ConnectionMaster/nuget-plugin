@@ -30,7 +30,7 @@ try {
  */
 CmdArgs.getCmdArgs = function () {
     validateCmdArgs();
-    logger.debug('Cmd params after validation:\\n' + JSON.stringify(cmd));
+    logger.debug('Cmd params after validation: ' + JSON.stringify(cmd));
     return cmd;
 };
 

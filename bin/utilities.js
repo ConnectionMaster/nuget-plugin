@@ -121,10 +121,10 @@ Utilities.postRequest = function (url, type, requestBody, onSuccess) {
         options.method = 'get';
     }
 
-    logger.debug('Request options:\\n' + JSON.stringify(options));
+    logger.debug('Request options: ' + JSON.stringify(options));
 
     request(options, function (err, entireResponse, responseBody) {
-        logger.debug('Http entire response:\n' + JSON.stringify(entireResponse));
+        logger.debug('Http entire response: ' + JSON.stringify(entireResponse));
         if (err) {
             logger.error('Http request failed\n' + err);
         }
