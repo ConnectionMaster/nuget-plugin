@@ -13,6 +13,7 @@ var fs = require('fs'),
     request = require('request'),
     parseString = require('xml2js').parseString,
     rimraf = require('rimraf'),
+    dateFormat = require('dateformat'),
     winston = require('winston');
 
 var logger = null;
@@ -22,16 +23,23 @@ var logger = null;
  * @returns winston logger object
  */
 Utilities.getLogger = function () {
+    var loggerFormat = function() {
+        var now = Date.now();
+        return dateFormat(now, 'isoDateTime');
+    };
+
+    var loggerFilenameDate = dateFormat(Date.now(), 'd-m-yy');
+
     if (logger === null) {
         logger = new winston.Logger({
             transports: [
                 new winston.transports.Console({
-                    timestamp: true,
+                    timestamp: loggerFormat,
                     level: 'info' // min log level to show - as defined by npm logging levels (see https://github.com/winstonjs/winston)
                 }),
                 new (winston.transports.File)({
-                    timestamp: true,
-                    filename: __dirname + '\\ios.log',
+                    timestamp: loggerFormat,
+                    filename: '.\\ws-nuget_' + loggerFilenameDate + '.log',
                     level: 'debug'
                 })
             ]

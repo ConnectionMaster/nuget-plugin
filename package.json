@@ -38,6 +38,7 @@
     "rimraf": "^2.6.1",
     "command-line-args": "^4.0.4",
     "prettyjson": "^1.2.1",
+    "dateformat":"^2.0.0",
     "winston": "^2.3.1"
   }
 }
