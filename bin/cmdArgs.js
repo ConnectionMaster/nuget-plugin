@@ -21,7 +21,7 @@ var logger = utilities.getLogger();
 try {
     var cmd = commandLineArgs(cmdArgsDefinitions); // load the actual cmd line arguments
 } catch (err) {
-    logger.error('Unable to load cmd arguments ' + err + '\\nExiting...');
+    logger.error('Unable to load cmd arguments ' + err + '\nExiting...');
     process.exit(0);
 }
 

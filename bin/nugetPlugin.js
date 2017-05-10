@@ -46,7 +46,7 @@ function initializeGlobalVariables() {
 
     try {
         confFile = utilities.loadJsonFile(cmdArgs.ws_config);
-        logger.debug('Configuration file:\\n' + JSON.stringify(confFile));
+        logger.debug('Configuration file: ' + JSON.stringify(confFile));
     } catch (err) {
         logger.error('Unable to read Ws Nuget configuration file. Exiting...\n' + err);
         process.exit(0);
@@ -79,7 +79,7 @@ function parseConfigXml(xmlPath, partialRequestBody, projectInfos, callback) {
             // Json object from xml has the following format:
             // {"packages":{"package":
             // [{"$":{"id":"","version":"","targetFramework":""}},{"$":{"id":"","version":"","targetFramework":""}}]}}
-            logger.debug('Xml config file ' + xmlPath + ' as json:\\n' + JSON.stringify(jsonConfig));
+            logger.debug('Xml config file ' + xmlPath + ' as json: ' + JSON.stringify(jsonConfig));
             if (jsonConfig.packages) {
                 if (jsonConfig.packages.package) {
                     var nugetPackages = jsonConfig.packages.package;

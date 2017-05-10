@@ -30,7 +30,7 @@ ConfBuilder.createPostRequestBody = function(conf, pluginAction) {
 
 ConfBuilder.createGlobalConfiguration = function (conf) {
     var globalConf = {
-        'wssUrl': 'http://localhost:8081/agent',
+        'wssUrl': 'https://saas.whitesourcesoftware.com/agent',
         'repositoryUrl': 'https://api.nuget.org/v3-flatcontainer/{0}/{1}/{0}.{1}.nupkg',
         'devDependencies': false
     };
