@@ -40,7 +40,7 @@ Utilities.getLogger = function () {
                 new (winston.transports.File)({
                     timestamp: loggerFormat,
                     filename: '.\\ws-nuget_' + loggerFilenameDate + '.log',
-                    level: 'debug'
+                    level: 'info'
                 })
             ]
         });

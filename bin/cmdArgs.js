@@ -13,7 +13,8 @@ var commandLineArgs = require('command-line-args'),
 const cmdArgsDefinitions = [
     {name: 'ws_config', alias: 'c', type: String},
     {name: 'nuget_config', alias: 'n', type: String},
-    {name: 'action', alias: 'a', type: String }
+    {name: 'action', alias: 'a', type: String },
+    {name: 'debug', alias: 'd', type: Boolean }
 ];
 
 var logger = utilities.getLogger();
@@ -35,6 +36,10 @@ CmdArgs.getCmdArgs = function () {
 };
 
 function validateCmdArgs() {
+    if (cmd.debug) {
+        logger.transports.file.level = 'debug';
+    }
+
     if (cmd.action) {
         var upperCaseAction = cmd.action.toUpperCase();
         if (upperCaseAction === 'UPDATE' || upperCaseAction === 'CHECK_POLICIES' || upperCaseAction === 'CHECK_POLICY_COMPLIANCE') {
@@ -59,9 +64,9 @@ function validateCmdArgs() {
     }
 
     if (!cmd.ws_config) {
-        logger.warn('Ws Nuget plugin configuration path is not specified. Searching configuration file in working directory.');
-        if (fs.existsSync('.')) { //todo check if working with relative paths
-            cmd.ws_config = '.';
+        if (fs.existsSync('.\\config.json')) {
+            logger.debug('Nuget plugin configuration path is found in working directory.');
+            cmd.ws_config = '.\\config.json';
         } else {
             logger.error('Ws Nuget plugin configuration file doesn\'t exits in working directory' + cmd.ws_config + ' please specify a valid path. Exiting...');
             process.exit(0);
