@@ -9,6 +9,7 @@ var format = require('string-format'),
     fs = require('fs'),
     queryString = require('querystring'),
     prettyJson = require('prettyjson'),
+    dateFormat = require('dateformat'),
     utilities = require('./utilities'),
     confBuilder = require('./confBuilder'),
     cmd = require('./cmdArgs');
@@ -25,6 +26,7 @@ var globalConf;
 run();
 
 function run() {
+    console.log('***** Initialized Nuget plugin ' + dateFormat(Date.now(), 'isoDateTime') + ' *****');
     initializeGlobalVariables();
 
     // Parse & validate conf file and create partial request params -
@@ -48,7 +50,7 @@ function initializeGlobalVariables() {
         confFile = utilities.loadJsonFile(cmdArgs.ws_config);
         logger.debug('Configuration file: ' + JSON.stringify(confFile));
     } catch (err) {
-        logger.error('Unable to read Ws Nuget configuration file. Exiting...\n' + err);
+        logger.error('Unable to read/parse Ws Nuget configuration file. Exiting...\n' + err);
         process.exit(0);
     }
 
@@ -72,15 +74,17 @@ function decideParseMethod(filePath, partialRequestBody, projectInfos) {
 function parseConfigXml(xmlPath, partialRequestBody, projectInfos, callback) {
     var downloadLinks = [];
     utilities.xmlToJson(xmlPath, function (err, jsonConfig) {
+        var confFile = xmlPath.substring(xmlPath.lastIndexOf('\\') + 1);
         if (err) {
-            logger.error('Unable to read ' + xmlPath + ' configuration file. Exiting...');
+            logger.error('Unable to read ' + confFile + ' nuget configuration file. ' +
+                'Make sure the file exists and is properly formatted. Exiting...');
             process.exit(0);
         } else {
             // Json object from xml has the following format:
             // {"packages":{"package":
             // [{"$":{"id":"","version":"","targetFramework":""}},{"$":{"id":"","version":"","targetFramework":""}}]}}
             logger.debug('Xml config file ' + xmlPath + ' as json: ' + JSON.stringify(jsonConfig));
-            if (jsonConfig.packages) {
+            if (jsonConfig && jsonConfig.packages) {
                 if (jsonConfig.packages.package) {
                     var nugetPackages = jsonConfig.packages.package;
                     for (var i = 0; i < nugetPackages.length; i++) {
@@ -96,12 +100,12 @@ function parseConfigXml(xmlPath, partialRequestBody, projectInfos, callback) {
                     // After all download links collected and parsed download them
                     callback(partialRequestBody, projectInfos, downloadLinks);
                 } else {
-                    logger.error('Packages.config file from ' + xmlPath + ' doesn\'t contain a packages tag. ' +
+                    logger.error(confFile + 'file doesn\'t contain a packages tag. ' +
                         'Make sure to the file is well formatted. Exiting...');
                     process.exit(0);
                 }
             } else {
-                logger.error('Packages.config file from ' + xmlPath + ' doesn\'t contain a packages tag. ' +
+                logger.error(confFile + ' file doesn\'t contain a packages tag. ' +
                     'Make sure to the file is well formatted. Exiting...');
                 process.exit(0);
             }
@@ -170,6 +174,6 @@ function sendRequestToServer(requestBody, projectInfos, dependencies) {
     var requestBodyStringified = queryString.stringify(requestBody);
     requestBodyStringified += "&diff=" + JSON.stringify(projectInfos);
     utilities.postRequest(globalConf.wssUrl, 'POST', requestBodyStringified, function (responseBody) {
-        logger.info('Request was successful ' + prettyJson.render(responseBody));
+        logger.info('Request was successful, response:\n' + prettyJson.render(JSON.parse(responseBody)));
     })
 }

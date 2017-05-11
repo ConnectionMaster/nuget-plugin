@@ -3,21 +3,22 @@
  */
 
 var ConfBuilder = exports;
-exports.constructor = function ConfBuilder(){};
+exports.constructor = function ConfBuilder() {
+};
 
 var Utilities = require('./utilities');
 var logger = Utilities.getLogger();
 
-ConfBuilder.createPostRequestBody = function(conf, pluginAction) {
+ConfBuilder.createPostRequestBody = function (conf, pluginAction) {
     var requestBody = {
         'agent': 'nuget-plugin',
         'agentVersion': '1.0',
-        'timeStamp': new Date().getTime()
+        'timeStamp': new Date().getTime(),
+        'type': pluginAction
     };
 
-    processRequestAction(requestBody, pluginAction);
     processOrgToken(requestBody, conf);
-    processProductToken(requestBody, conf);
+    processProductIdentification(requestBody, conf);
 
     if (conf.requesterEmail) {
         requestBody.requesterEmail = conf.requesterEmail;
@@ -43,12 +44,13 @@ ConfBuilder.createGlobalConfiguration = function (conf) {
     return globalConf;
 };
 
-ConfBuilder.processProjectIdentification = function(conf, confFileName) {
+ConfBuilder.processProjectIdentification = function (conf, confFileName) {
     var agentProjectInfo = {
         'projectToken': undefined,
         'coordinates': {}
     };
 
+    // todo add check to project identification and product and notify of strange behavior?
     // validate and add project token
     if (conf.projectToken) {
         if (conf.projectToken.length !== 36) {
@@ -68,7 +70,7 @@ ConfBuilder.processProjectIdentification = function(conf, confFileName) {
                 agentProjectInfo.coordinates.version = conf.projectVersion;
             }
         } else { // if no name or token give name as default according to nuget conf filename todo update what if conf name is the same among projects?
-            if(!agentProjectInfo.projectToken) {
+            if (!agentProjectInfo.projectToken) {
                 var nameFromFile = confFileName.substring(confFileName.lastIndexOf('\\') + 1);
                 agentProjectInfo.coordinates.artifactId = nameFromFile;
             }
@@ -91,34 +93,11 @@ function processOrgToken(requestBody, conf) {
     requestBody.token = conf.apiKey;
 }
 
-function processRequestAction(requestBody, pluginAction) {
-    if (!pluginAction) {
-        logger.warn('No plugin action is specified, defaulting to UPDATE action. To change action please refer to the documentation.');
-        requestBody.type = 'UPDATE';
-    } else {
-        requestBody.type = pluginAction;
-    }
-}
-
-function processProductToken(requestBody, conf) {
-    // validate and add product token
-    if (conf.productToken) {
-        if (conf.productToken.length !== 36) {
-            logger.warn('Product token should be 36 characters long, token will be ignored.');
-        } else {
-            requestBody.productToken = conf.productToken;
-        }
-    }
-
-    // if valid token and product name then ignore product name otherwise use it
-    if ((conf.productToken && conf.productToken.length === 36) && conf.productName) {
-        logger.warn('Can\'t use both product token and product name in configuration, product name will be ignored.');
-    } else {
-        if (conf.productName) {
-            requestBody.product = conf.productName;
-            if (conf.productVersion) {
-                requestBody.productVersion = conf.productVersion;
-            }
+function processProductIdentification(requestBody, conf) {
+    if (conf.product) {
+        requestBody.product = conf.product;
+        if (conf.productVersion) {
+            requestBody.productVersion = conf.productVersion;
         }
     }
 }

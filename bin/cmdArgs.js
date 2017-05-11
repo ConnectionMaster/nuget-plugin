@@ -8,6 +8,8 @@ exports.constructor = function CmdArg(){};
 var commandLineArgs = require('command-line-args'),
     path = require('path'),
     fs = require('fs'),
+    winston = require('winston'),
+    dateFormat = require('dateformat'),
     utilities = require('./utilities');
 
 const cmdArgsDefinitions = [
@@ -36,13 +38,14 @@ CmdArgs.getCmdArgs = function () {
 };
 
 function validateCmdArgs() {
-    if (cmd.debug) {
-        logger.transports.file.level = 'debug';
+    if (!cmd.debug) {
+        logger.remove(winston.transports.File);
     }
+    logger.debug('Start Nuget plugin ' + dateFormat(Date.now(), 'isoDateTime'));
 
     if (cmd.action) {
         var upperCaseAction = cmd.action.toUpperCase();
-        if (upperCaseAction === 'UPDATE' || upperCaseAction === 'CHECK_POLICIES' || upperCaseAction === 'CHECK_POLICY_COMPLIANCE') {
+        if (upperCaseAction === 'UPDATE' || upperCaseAction === 'CHECK_POLICY_COMPLIANCE') {
             cmd.action = upperCaseAction;
         } else {
             logger.warn('Action ' + cmd.action + ' is not supported. Please refer to the documentation for supported action types. Using UPDATE default action.');
@@ -68,12 +71,12 @@ function validateCmdArgs() {
             logger.debug('Nuget plugin configuration path is found in working directory.');
             cmd.ws_config = '.\\ws_config.json';
         } else {
-            logger.error('Ws Nuget plugin configuration file doesn\'t exits in working directory' + cmd.ws_config + ' please specify a valid path. Exiting...');
+            logger.error('Ws Nuget plugin configuration file doesn\'t exits in working directory please specify a valid path to ws_config.json. Exiting...');
             process.exit(0);
         }
     } else {
         if (!fs.existsSync(cmd.ws_config)) {
-            logger.error('Ws Nuget plugin configuration file doesn\'t exits in ' + cmd.ws_config + ' please specify a valid path. Exiting...');
+            logger.error('Ws Nuget plugin configuration file doesn\'t exits in ' + cmd.ws_config + ' please specify a valid path to ws_config.json. Exiting...');
             process.exit(0);
         }
     }

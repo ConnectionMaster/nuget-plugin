@@ -40,12 +40,12 @@ Utilities.getLogger = function () {
                 new (winston.transports.File)({
                     timestamp: loggerFormat,
                     filename: '.\\ws-nuget_' + loggerFilenameDate + '.log',
-                    level: 'info'
+                    level: 'debug'
                 })
             ]
         });
+        logger.cli();
     }
-    logger.cli();
     return logger;
 };
 
@@ -126,7 +126,7 @@ Utilities.postRequest = function (url, type, requestBody, onSuccess) {
     request(options, function (err, entireResponse, responseBody) {
         logger.debug('Http entire response: ' + JSON.stringify(entireResponse));
         if (err) {
-            logger.error('Http request failed\n' + err);
+            logger.error('Http request failed.\n' + err);
         }
         if (entireResponse) {
             var statusCode = entireResponse.statusCode;
