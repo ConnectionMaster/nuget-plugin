@@ -33,7 +33,6 @@ function run() {
     // this is done before everything else to make sure all params are valid before the actual plugin execution
     var partialRequestBody = confBuilder.createPostRequestBody(confFile, cmdArgs.action);
     var projectInfos = [confBuilder.processProjectIdentification(confFile, cmdArgs.nuget_config)];
-
     // decide how to parse nuget dependencies file and run plugin
     decideParseMethod(cmdArgs.nuget_config, partialRequestBody, projectInfos);
 }
@@ -134,7 +133,7 @@ function onReadyLinks(PartialRequestBody, projectInfos, downloadLinks) {
                     logger.debug('Error downloading ' + name + ' with error code ' + err.statusCode);
                 }
                 --asyncCounter; // reduced even if no download is available - otherwise process will never continue
-                missedDependencies.push({filename: name, link: url})
+                missedDependencies.push({filename: name, link: url});
             } else {
                 createDependencyInfo(PartialRequestBody, projectInfos, dependencies, missedDependencies, file, --asyncCounter, onDependenciesReady);
             }
@@ -174,6 +173,6 @@ function sendRequestToServer(requestBody, projectInfos, dependencies) {
     var requestBodyStringified = queryString.stringify(requestBody);
     requestBodyStringified += "&diff=" + JSON.stringify(projectInfos);
     utilities.postRequest(globalConf.wssUrl, 'POST', requestBodyStringified, function (responseBody) {
-        logger.info('Request was successful, response:\n' + prettyJson.render(JSON.parse(responseBody)));
+        logger.info('Server response:\n' + prettyJson.render(JSON.parse(responseBody)));
     })
 }

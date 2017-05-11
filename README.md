@@ -13,3 +13,5 @@
 
 
 More about the White Source service: [http://www.whitesourcesoftware.com/](http://www.whitesourcesoftware.com/)
+
+View documentation here: [http://docs.whitesourcesoftware.com/display/serviceDocs/Nuget+Plugin](http://docs.whitesourcesoftware.com/display/serviceDocs/Nuget+Plugin)

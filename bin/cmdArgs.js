@@ -40,7 +40,10 @@ CmdArgs.getCmdArgs = function () {
 function validateCmdArgs() {
     if (!cmd.debug) {
         logger.remove(winston.transports.File);
+    } else {
+        logger.transports.console.level = 'debug';
     }
+
     logger.debug('Start Nuget plugin ' + dateFormat(Date.now(), 'isoDateTime'));
 
     if (cmd.action) {

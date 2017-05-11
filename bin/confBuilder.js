@@ -11,7 +11,7 @@ var logger = Utilities.getLogger();
 
 ConfBuilder.createPostRequestBody = function (conf, pluginAction) {
     var requestBody = {
-        'agent': 'nuget-plugin',
+        'agent': 'generic',
         'agentVersion': '1.0',
         'timeStamp': new Date().getTime(),
         'type': pluginAction
@@ -33,7 +33,7 @@ ConfBuilder.createGlobalConfiguration = function (conf) {
     var globalConf = {
         'wssUrl': 'https://saas.whitesourcesoftware.com/agent',
         'repositoryUrl': 'https://api.nuget.org/v3-flatcontainer/{0}/{1}/{0}.{1}.nupkg',
-        'devDependencies': false
+        'devDependencies': true
     };
 
     globalConf.wssUrl = conf.wssUrl ? conf.wssUrl : globalConf.wssUrl;

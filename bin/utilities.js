@@ -2,7 +2,6 @@
  * Created by Yossi.Weinberg on 01/05/2017.
  */
 
-// todo check what this is for
 var Utilities = exports;
 exports.constructor = function Utilities() {};
 
