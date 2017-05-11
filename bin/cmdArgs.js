@@ -55,18 +55,18 @@ function validateCmdArgs() {
 
     if (cmd.nuget_config) {
         if (!fs.existsSync(cmd.nuget_config)) {
-            logger.error('Nuget packaging configuration file ' + cmd.nuget_config + ' doesn\'t exist. Exiting...')
-            // process.exit(0); //todo uncomment in production
+            logger.error('Nuget packaging configuration file ' + cmd.nuget_config + ' doesn\'t exist. Exiting...');
+            process.exit(0);
         }
     } else {
         logger.error("Nuget packaging configuration path is not specified. Exiting...");
-        // process.exit(0); //todo uncomment in production
+        process.exit(0);
     }
 
     if (!cmd.ws_config) {
-        if (fs.existsSync('.\\config.json')) {
+        if (fs.existsSync('.\\ws_config.json')) {
             logger.debug('Nuget plugin configuration path is found in working directory.');
-            cmd.ws_config = '.\\config.json';
+            cmd.ws_config = '.\\ws_config.json';
         } else {
             logger.error('Ws Nuget plugin configuration file doesn\'t exits in working directory' + cmd.ws_config + ' please specify a valid path. Exiting...');
             process.exit(0);
