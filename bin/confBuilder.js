@@ -11,7 +11,7 @@ var logger = Utilities.getLogger();
 
 ConfBuilder.createPostRequestBody = function (conf, pluginAction) {
     var requestBody = {
-        'agent': 'generic',
+        'agent': 'nuget-plugin',
         'agentVersion': '1.0',
         'timeStamp': new Date().getTime(),
         'type': pluginAction
