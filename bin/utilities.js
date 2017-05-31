@@ -84,8 +84,8 @@ Utilities.calculateSha1 = function (file, callback) {
 };
 
 Utilities.downloadFile = function (url, filename, destination, callback) {
+    var fullFilePath = destination + path.sep + filename;
     download(url).then(function (data) {
-            var fullFilePath = destination + path.sep + filename;
             fs.writeFileSync(fullFilePath, data);
             if (fs.statSync(fullFilePath).isFile()) {
                 callback(null, url, filename, fullFilePath);
@@ -106,10 +106,11 @@ Utilities.xmlToJson = function(path, callback) {
     parseString(xmlFile, callback);
 };
 
-Utilities.postRequest = function (url, type, requestBody, onSuccess) {
+Utilities.postRequest = function (url, type, requestBody, requestAgent, onSuccess) {
     var options = {
         url : url,
-        timeout : 1800000,
+        timeout : 300000,
+        agent: requestAgent,
         headers : { 'Charset': 'UTF-8',
                     'Content-Type': 'application/x-www-form-urlencoded'}
     };

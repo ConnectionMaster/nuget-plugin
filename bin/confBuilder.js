@@ -6,6 +6,9 @@ var ConfBuilder = exports;
 exports.constructor = function ConfBuilder() {
 };
 
+var httpsProxyAgent = require('https-proxy-agent'),
+    getProxy = require('get-proxy');
+
 var Utilities = require('./utilities');
 var logger = Utilities.getLogger();
 
@@ -39,6 +42,19 @@ ConfBuilder.createGlobalConfiguration = function (conf) {
     globalConf.wssUrl = conf.wssUrl ? conf.wssUrl : globalConf.wssUrl;
     globalConf.devDependencies = conf.devDependencies ? conf.devDependencies : globalConf.devDependencies;
     globalConf.repositoryUrl = conf.repositoryUrl ? conf.repositoryUrl : globalConf.repositoryUrl;
+
+    var proxy = getProxy();
+    if (proxy) {
+        if (proxy.includes('@')) { // if has username and password in url
+            var partialProxy = proxy.substr(proxy.lastIndexOf('@') + 1, proxy.length);
+            logger.info('Authenticated proxy destination: ' + partialProxy);
+            logger.info('Authenticated proxy detected: ' + proxy);
+        } else {
+            logger.info('Proxy detected: ' + proxy);
+        }
+        globalConf.requestAgent = new httpsProxyAgent(proxy);
+    }
+
 
     logger.debug('Global configuration after validation: ' + JSON.stringify(globalConf));
     return globalConf;

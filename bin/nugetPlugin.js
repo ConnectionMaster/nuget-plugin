@@ -115,7 +115,7 @@ function parseConfigXml(xmlPath, partialRequestBody, projectInfos, callback) {
 /**
  * Download all pkgs, calculate sha1 and send request
  */
-function onReadyLinks(PartialRequestBody, projectInfos, downloadLinks) {
+function onReadyLinks(partialRequestBody, projectInfos, downloadLinks) {
     utilities.mkdir(tmpFolderPath);
     var asyncCounter = downloadLinks.length; // counter to wait for all async download actions to be done
     var dependencies = [];
@@ -130,12 +130,22 @@ function onReadyLinks(PartialRequestBody, projectInfos, downloadLinks) {
                 if (err.statusCode === 404) {
                     logger.debug('Unable to find ' + name + ' in the public nuget repository');
                 } else {
-                    logger.debug('Error downloading ' + name + ' with error code ' + err.statusCode);
+                    var errorMsg = '';
+                    if (err.statusCode) {
+                        errorMsg += ' with code ' + err.statusCode;
+                    }
+                    if (err.message) {
+                        errorMsg += '. Further information: ' + err.message;
+                    }
+                    logger.error('Error downloading ' + name + errorMsg);
                 }
                 --asyncCounter; // reduced even if no download is available - otherwise process will never continue
                 missedDependencies.push({filename: name, link: url});
+                if (asyncCounter === 0) {
+                    sendScanResult(partialRequestBody, projectInfos, dependencies, missedDependencies, onDependenciesReady);
+                }
             } else {
-                createDependencyInfo(PartialRequestBody, projectInfos, dependencies, missedDependencies, file, --asyncCounter, onDependenciesReady);
+                createDependencyInfo(partialRequestBody, projectInfos, dependencies, missedDependencies, file, --asyncCounter, onDependenciesReady);
             }
         });
     }
@@ -154,13 +164,17 @@ function createDependencyInfo(partialRequestBody, agentProjectInfos, dependencie
         dependencies.push(dependency);
 
         if (asyncDownloadCounter === 0) {
-            if (missedDependencies.length > 0) {
-                logger.warn('Unable to resolve the following nuget packages:\n' + prettyJson.render(missedDependencies));
-            }
-            logger.debug('Collected dependencies are: ' + JSON.stringify(dependencies));
-            callback(partialRequestBody, agentProjectInfos, dependencies)
+            sendScanResult(partialRequestBody, agentProjectInfos, dependencies, missedDependencies, callback);
         }
     });
+}
+
+function sendScanResult(partialRequestBody, agentProjectInfos, dependencies, missedDependencies, callback) {
+    if (missedDependencies.length > 0) {
+        logger.warn('Unable to resolve the following nuget packages:\n' + prettyJson.render(missedDependencies));
+    }
+    logger.debug('Collected dependencies are: ' + JSON.stringify(dependencies));
+    callback(partialRequestBody, agentProjectInfos, dependencies)
 }
 
 function onDependenciesReady(partialRequestBody, projectInfos, dependencies) {
@@ -172,7 +186,7 @@ function sendRequestToServer(requestBody, projectInfos, dependencies) {
     projectInfos[0].dependencies = dependencies;
     var requestBodyStringified = queryString.stringify(requestBody);
     requestBodyStringified += "&diff=" + JSON.stringify(projectInfos);
-    utilities.postRequest(globalConf.wssUrl, 'POST', requestBodyStringified, function (responseBody) {
+    utilities.postRequest(globalConf.wssUrl, 'POST', requestBodyStringified, globalConf.requestAgent, function (responseBody) {
         logger.info('Server response:\n' + prettyJson.render(JSON.parse(responseBody)));
     })
 }

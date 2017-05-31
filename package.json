@@ -1,6 +1,6 @@
 {
   "name": "ws-nuget-plugin",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Whitesource Nuget plugin",
   "preferGlobal": true,
   "bin": {
@@ -39,6 +39,8 @@
     "command-line-args": "^4.0.4",
     "prettyjson": "^1.2.1",
     "dateformat":"^2.0.0",
+    "https-proxy-agent" : "1.0.0",
+    "get-proxy": "^2.0.0",
     "winston": "^2.3.1"
   }
 }
