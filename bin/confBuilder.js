@@ -48,7 +48,6 @@ ConfBuilder.createGlobalConfiguration = function (conf) {
         if (proxy.includes('@')) { // if has username and password in url
             var partialProxy = proxy.substr(proxy.lastIndexOf('@') + 1, proxy.length);
             logger.info('Authenticated proxy destination: ' + partialProxy);
-            logger.info('Authenticated proxy detected: ' + proxy);
         } else {
             logger.info('Proxy detected: ' + proxy);
         }
