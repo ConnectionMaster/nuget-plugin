@@ -14,7 +14,6 @@ var commandLineArgs = require('command-line-args'),
 
 const cmdArgsDefinitions = [
     {name: 'ws_config', alias: 'c', type: String},
-    {name: 'nuget_config', alias: 'n', type: String},
     {name: 'action', alias: 'a', type: String },
     {name: 'debug', alias: 'd', type: Boolean }
 ];
@@ -57,16 +56,6 @@ function validateCmdArgs() {
     } else {
         logger.warn('No plugin action was specified as a cmd argument, using UPDATE default action.');
         cmd.action = 'UPDATE';
-    }
-
-    if (cmd.nuget_config) {
-        if (!fs.existsSync(cmd.nuget_config)) {
-            logger.error('Nuget packaging configuration file ' + cmd.nuget_config + ' doesn\'t exist. Exiting...');
-            process.exit(0);
-        }
-    } else {
-        logger.error("Nuget packaging configuration path is not specified. Exiting...");
-        process.exit(0);
     }
 
     if (!cmd.ws_config) {

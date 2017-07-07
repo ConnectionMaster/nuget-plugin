@@ -7,34 +7,16 @@ exports.constructor = function ConfBuilder() {
 };
 
 var httpsProxyAgent = require('https-proxy-agent'),
-    getProxy = require('get-proxy');
+    getProxy = require('get-proxy'),
+    fs = require('fs');
 
 var Utilities = require('./utilities');
 var logger = Utilities.getLogger();
 
-ConfBuilder.createPostRequestBody = function (conf, pluginAction) {
-    var requestBody = {
-        'agent': 'nuget-plugin',
-        'agentVersion': '1.0',
-        'timeStamp': new Date().getTime(),
-        'type': pluginAction
-    };
-
-    processOrgToken(requestBody, conf);
-    processProductIdentification(requestBody, conf);
-
-    if (conf.requesterEmail) {
-        requestBody.requesterEmail = conf.requesterEmail;
-    }
-    requestBody.forceCheckAllDependencies = conf.forceCheckAllDependencies ? conf.forceCheckAllDependencies : false;
-
-    logger.debug('Partial post request after validation: ' + JSON.stringify(requestBody));
-    return requestBody;
-};
-
 ConfBuilder.createGlobalConfiguration = function (conf) {
     var globalConf = {
-        'wssUrl': 'https://saas.whitesourcesoftware.com/agent',
+        // 'wssUrl': 'https://saas.whitesourcesoftware.com/agent',
+        'wssUrl': 'http://localhost:8081/agent',
         'repositoryUrl': 'https://api.nuget.org/v3-flatcontainer/{0}/{1}/{0}.{1}.nupkg',
         'devDependencies': true
     };
@@ -59,7 +41,28 @@ ConfBuilder.createGlobalConfiguration = function (conf) {
     return globalConf;
 };
 
-ConfBuilder.processProjectIdentification = function (conf, confFileName) {
+ConfBuilder.getAllNugetConfigFiles = function (conf) {
+    var foundConfigFiles = [];
+    if (conf.configurationFilesPaths) {
+        conf.configurationFilesPaths.forEach(function (configFile) {
+            if (!fs.existsSync(configFile)) {
+                logger.warn('Nuget packaging configuration file ' + configFile + ' doesn\'t exist. Skipping...');
+            } else {
+                foundConfigFiles.push(configFile);
+            }
+        });
+    }
+
+    if (foundConfigFiles.length === 0) {
+        logger.error('No nuget packaging configuration files were found, make sure ws_config.json file contains ' +
+            'a valid "configurationFilesPaths" json object with valid nuget configuration files and their full path. ' +
+            'Exiting...');
+        process.exit(0);
+    }
+    return foundConfigFiles;
+};
+
+ConfBuilder.processProjectIdentification = function (conf) {
     var agentProjectInfo = {
         'projectToken': undefined,
         'coordinates': {}
@@ -84,15 +87,34 @@ ConfBuilder.processProjectIdentification = function (conf, confFileName) {
             if (conf.projectVersion) {
                 agentProjectInfo.coordinates.version = conf.projectVersion;
             }
-        } else { // if no name or token give name as default according to nuget conf filename todo update what if conf name is the same among projects?
+        } else { // if no name or token give default name
             if (!agentProjectInfo.projectToken) {
-                var nameFromFile = confFileName.substring(confFileName.lastIndexOf('\\') + 1);
-                agentProjectInfo.coordinates.artifactId = nameFromFile;
+                agentProjectInfo.coordinates.artifactId = 'Demo Project';
             }
         }
     }
     logger.debug('Agent project info after validation: ' + JSON.stringify(agentProjectInfo));
     return agentProjectInfo;
+};
+
+ConfBuilder.createPostRequestBody = function (conf, pluginAction) {
+    var requestBody = {
+        'agent': 'nuget-plugin',
+        'agentVersion': '1.0',
+        'timeStamp': new Date().getTime(),
+        'type': pluginAction
+    };
+
+    processOrgToken(requestBody, conf);
+    processProductIdentification(requestBody, conf);
+
+    if (conf.requesterEmail) {
+        requestBody.requesterEmail = conf.requesterEmail;
+    }
+    requestBody.forceCheckAllDependencies = conf.forceCheckAllDependencies ? conf.forceCheckAllDependencies : false;
+
+    logger.debug('Partial post request after validation: ' + JSON.stringify(requestBody));
+    return requestBody;
 };
 
 function processOrgToken(requestBody, conf) {

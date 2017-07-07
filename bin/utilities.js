@@ -140,3 +140,10 @@ Utilities.postRequest = function (url, type, requestBody, requestAgent, onSucces
         }
     });
 };
+
+Utilities.removeDuplicatePrimitivesFromArray = function (array) {
+    var uniqueArray = {};
+    return array.filter(function(item) {
+        return uniqueArray.hasOwnProperty(item) ? false : (uniqueArray[item] = true);
+    });
+};
