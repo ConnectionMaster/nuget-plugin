@@ -71,15 +71,11 @@ ConfBuilder.processProjectIdentification = function (conf) {
     // todo add check to project identification and product and notify of strange behavior?
     // validate and add project token
     if (conf.projectToken) {
-        if (conf.projectToken.length !== 36) {
-            logger.warn('Project token should be 36 characters long, token will be ignored.');
-        } else {
-            agentProjectInfo.projectToken = conf.projectToken;
-        }
+        agentProjectInfo.projectToken = conf.projectToken;
     }
 
     // if valid token and project name then ignore project name otherwise use it
-    if ((conf.projectToken && conf.projectToken.length === 36) && conf.projectName) {
+    if (conf.projectToken && conf.projectName) {
         logger.warn('Can\'t use both project token and project name in configuration, project name will be ignored.');
     } else {
         if (conf.projectName) {
@@ -121,10 +117,6 @@ function processOrgToken(requestBody, conf) {
     // validate & add org token
     if (!conf.apiKey) {
         logger.error('Organizational api key is not configured, please update the configuration file. Exiting process...');
-        process.exit(0);
-    }
-    if (conf.apiKey.length !== 36) {
-        logger.error('Organizational api key should be 36 characters long. Exiting process...');
         process.exit(0);
     }
     requestBody.token = conf.apiKey;
