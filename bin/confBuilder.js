@@ -24,6 +24,8 @@ ConfBuilder.createGlobalConfiguration = function (conf) {
     globalConf.wssUrl = conf.wssUrl ? conf.wssUrl : globalConf.wssUrl;
     globalConf.devDependencies = conf.devDependencies ? conf.devDependencies : globalConf.devDependencies;
     globalConf.repositoryUrl = conf.repositoryUrl ? conf.repositoryUrl : globalConf.repositoryUrl;
+    globalConf.privateRegistryUsername = conf.privateRegistryUsername ? conf.privateRegistryUsername : null;
+    globalConf.privateRegistryPassword = conf.privateRegistryPassword ? conf.privateRegistryPassword : '';
 
     var proxy = getProxy();
     if (proxy) {

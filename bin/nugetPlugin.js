@@ -57,7 +57,7 @@ function initializeGlobalVariables() {
 
 function collectNugetDownloadLinks(configFilesArray, requestBody, projectInfos) {
     var asyncFilesCount = {count: configFilesArray.length}; // wait all async methods to finish - an object and not a primitive since js doesn't allow to pass primitives by reference
-    var downloadLinks = [];
+    var downloadLinks = {};
 
     for (var i = 0; i < configFilesArray.length; i++) {
         decideParseMethod(configFilesArray[i], asyncFilesCount, downloadLinks, requestBody, projectInfos);
@@ -99,8 +99,11 @@ function getLinksFromConfigXml(filePath, asyncConfigFilesCount, downloadLinks, p
                             if (pkg.developmentDependency && !globalConf.devDependencies) {
                                 continue;
                             }
+                            var pkgId = pkg.id.toLowerCase();
+                            var pkgVersion = pkg.version.toLowerCase();
                             var downloadUrl = format(globalConf.repositoryUrl, pkg.id.toLowerCase(), pkg.version.toLowerCase());
-                            downloadLinks.push(downloadUrl);
+                            var pkgFileName = pkgId + "." + pkgVersion + ".nupkg";
+                            downloadLinks[downloadUrl] = pkgFileName;
                         }
                     }
                     asyncConfigFilesCount.count--;
@@ -117,8 +120,8 @@ function getLinksFromConfigXml(filePath, asyncConfigFilesCount, downloadLinks, p
         }
         // After download links from all nuget conf files are collected and parsed, download them
         if (asyncConfigFilesCount.count === 0) {
-            var uniqueLinks = utilities.removeDuplicatePrimitivesFromArray(downloadLinks);
-            callback(partialRequestBody, projectInfos, uniqueLinks);
+            //var uniqueLinks = utilities.removeDuplicatePrimitivesFromArray(downloadLinks);
+            callback(partialRequestBody, projectInfos, downloadLinks);
         }
     });
 }
@@ -128,15 +131,16 @@ function getLinksFromConfigXml(filePath, asyncConfigFilesCount, downloadLinks, p
  */
 function onReadyLinks(partialRequestBody, projectInfos, downloadLinks) {
     utilities.mkdir(tmpFolderPath);
-    var asyncCounter = downloadLinks.length; // counter to wait for all async download actions to be done
+    var links = Object.keys(downloadLinks);
+    var asyncCounter = links.length; // counter to wait for all async download actions to be done
     var dependencies = [];
     var missedDependencies = [];
 
-    for (var i =0; i < downloadLinks.length; i++) {
-        var link = downloadLinks[i];
-        var filename = link.substring(link.lastIndexOf('/') + 1);
+    for (var i =0; i < links.length; i++) {
+        var link = links[i];
+        var filename = downloadLinks[link];
 
-        utilities.downloadFile(link, filename, tmpFolderPath, function (err, url, name, file) {
+        utilities.downloadFile(link, filename, tmpFolderPath, globalConf.privateRegistryUsername, globalConf.privateRegistryPassword, function (err, url, name, file) {
             if (err) {
                 if (err.statusCode === 404) {
                     logger.debug('Unable to find ' + name + ' in the public nuget repository');

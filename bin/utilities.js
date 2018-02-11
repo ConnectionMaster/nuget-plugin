@@ -83,12 +83,27 @@ Utilities.calculateSha1 = function (file, callback) {
     })
 };
 
-Utilities.downloadFile = function (url, filename, destination, callback) {
+Utilities.downloadFile = function (url, filename, destination, privateRegistryUsername, privateRegistryPassword, callback) {
+    var options = {};
+    var emptyString = '';
+    if(privateRegistryPassword !== null && privateRegistryPassword !== emptyString) {
+        var userAndPassAuth = privateRegistryUsername + ":" + privateRegistryPassword;
+        options = {
+            headers: {
+                Authorization: 'Basic  ' + new Buffer(userAndPassAuth).toString('base64')
+            }
+        };
+    }
     var fullFilePath = destination + path.sep + filename;
-    download(url).then(function (data) {
-            fs.writeFileSync(fullFilePath, data);
-            if (fs.statSync(fullFilePath).isFile()) {
-                callback(null, url, filename, fullFilePath);
+    download(url, options).then(function (data) {
+            if (data.toString().indexOf("<!DOCTYPE html") == -1) {
+                fs.writeFileSync(fullFilePath, data);
+                if (fs.statSync(fullFilePath).isFile()) {
+                    callback(null, url, filename, fullFilePath);
+                }
+            } else { // the html page was downloaded and not the file (it occurs when wrong password was entered)
+                var downloadFailed = true;
+                callback(downloadFailed, url, filename);
             }
         },
         function (err) {
