@@ -100,7 +100,7 @@ ConfBuilder.processProjectIdentification = function (conf) {
 ConfBuilder.createPostRequestBody = function (conf, pluginAction) {
     var requestBody = {
         'agent': 'nuget-plugin',
-        'agentVersion': '18.1.3',
+        'agentVersion': '18.2.1',
         'timeStamp': new Date().getTime(),
         'type': pluginAction
     };
