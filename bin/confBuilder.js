@@ -22,7 +22,9 @@ ConfBuilder.createGlobalConfiguration = function (conf) {
     };
 
     globalConf.wssUrl = conf.wssUrl ? conf.wssUrl : globalConf.wssUrl;
-    globalConf.devDependencies = conf.devDependencies ? conf.devDependencies : globalConf.devDependencies;
+    if (typeof(conf.devDependencies) === "boolean") {
+        globalConf.devDependencies = conf.devDependencies
+    }
     globalConf.repositoryUrl = conf.repositoryUrl ? conf.repositoryUrl : globalConf.repositoryUrl;
     globalConf.privateRegistryUsername = conf.privateRegistryUsername ? conf.privateRegistryUsername : null;
     globalConf.privateRegistryPassword = conf.privateRegistryPassword ? conf.privateRegistryPassword : '';

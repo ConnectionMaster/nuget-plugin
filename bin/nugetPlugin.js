@@ -70,6 +70,8 @@ function collectNugetDownloadLinks(configFilesArray, requestBody, projectInfos) 
 function decideParseMethod(filePath, asyncFilesCount, downloadLinks, partialRequestBody, projectInfos) {
     if (filePath.endsWith('.config')) {
         getLinksFromConfigXml(filePath, asyncFilesCount, downloadLinks, partialRequestBody, projectInfos, onReadyLinks);
+    } else if (filePath.endsWith('.csproj')) {
+        getLinksFromCsprojXml(filePath, asyncFilesCount, downloadLinks, partialRequestBody, projectInfos, onReadyLinks);
     } else {
         // other files parsing
     }
@@ -124,6 +126,70 @@ function getLinksFromConfigXml(filePath, asyncConfigFilesCount, downloadLinks, p
             callback(partialRequestBody, projectInfos, downloadLinks);
         }
     });
+}
+
+/**
+ * Parse .csproj xml file to json, extract all nuget packages (pkg name and version) and create download links
+ */
+function getLinksFromCsprojXml(filePath, asyncConfigFilesCount, downloadLinks, partialRequestBody, projectInfos, callback) {
+    utilities.xmlToJson(filePath, function (err, jsonCsproj) {
+        var csprojFile = filePath.substring(filePath.lastIndexOf('\\') + 1);
+        if (err) {
+            logger.error('Unable to read ' + csprojFile + 'Make sure the file exists and is properly formatted. Skipping...');
+        } else {
+            logger.debug('Xml config file ' + filePath + ' as json: ' + JSON.stringify(jsonCsproj));
+            if (jsonCsproj) {
+                if (jsonCsproj.Project) {
+                    var itemGroupArray = jsonCsproj.Project.ItemGroup;
+                    if (itemGroupArray) {
+                        for (var i = 0; i < itemGroupArray.length; i++) {
+                            var packageReferences = itemGroupArray[i]['PackageReference'];
+                            if (packageReferences) {
+                                for (var j = 0; j < packageReferences.length; j++) {
+                                    var package = packageReferences[j]['$'];
+                                    if (package && package.Include && package.Version) {
+                                        if (!globalConf.devDependencies && isPackagePrivateAssetsAll(packageReferences[j])) {
+                                            continue;
+                                        }
+                                        var pkgId = package.Include.toLowerCase();
+                                        var pkgVersion = package.Version.toLowerCase();
+                                        var downloadUrl = format(globalConf.repositoryUrl, pkgId, pkgVersion);
+                                        var pkgFileName = pkgId + "." + pkgVersion + ".nupkg";
+                                        downloadLinks[downloadUrl] = pkgFileName;
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        logger.error(csprojFile + 'file doesn\'t contain an ItemGroup tag. ' +
+                            'Make sure to the file is well formatted. Skipping...');
+                    }
+                } else {
+                    logger.error(csprojFile + 'file doesn\'t contain a Project tag. ' +
+                        'Make sure to the file is well formatted. Skipping...');
+                }
+            } else {
+                logger.error(csprojFile + 'file doesn\'t contain a Project tag. ' +
+                    'Make sure to the file is well formatted. Skipping...');
+            }
+        }
+        asyncConfigFilesCount.count--;
+        // After download links from all nuget conf files are collected and parsed, download them
+        if (asyncConfigFilesCount.count === 0) {
+            //var uniqueLinks = utilities.removeDuplicatePrimitivesFromArray(downloadLinks);
+            callback(partialRequestBody, projectInfos, downloadLinks);
+        }
+    });
+}
+
+function isPackagePrivateAssetsAll(package) {
+    var privateAssets = package.PrivateAssets;
+    if (privateAssets && privateAssets.length == 1) {
+        if (privateAssets[0].toLowerCase() == "all") {
+            return true;
+        }
+    }
+    return false;
 }
 
 /**
