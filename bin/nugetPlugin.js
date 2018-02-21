@@ -73,7 +73,7 @@ function decideParseMethod(filePath, asyncFilesCount, downloadLinks, partialRequ
     } else if (filePath.endsWith('.csproj')) {
         getLinksFromCsprojXml(filePath, asyncFilesCount, downloadLinks, partialRequestBody, projectInfos, onReadyLinks);
     } else {
-        // other files parsing
+        // other files parsing.
     }
 }
 
