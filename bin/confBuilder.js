@@ -28,6 +28,16 @@ ConfBuilder.createGlobalConfiguration = function (conf) {
     globalConf.repositoryUrl = conf.repositoryUrl ? conf.repositoryUrl : globalConf.repositoryUrl;
     globalConf.privateRegistryUsername = conf.privateRegistryUsername ? conf.privateRegistryUsername : null;
     globalConf.privateRegistryPassword = conf.privateRegistryPassword ? conf.privateRegistryPassword : '';
+    if (globalConf.repositoryUrl.indexOf("myget.org") != -1) {
+        var index = globalConf.repositoryUrl.indexOf("/api/");
+        if (index != -1) {
+            var newRepositryUrl = globalConf.repositoryUrl.substr(0, index) + "/auth/" +  globalConf.privateRegistryPassword +
+                globalConf.repositoryUrl.substr(index, globalConf.repositoryUrl.length - index);
+            globalConf.repositoryUrl = newRepositryUrl;
+        }
+        globalConf.privateRegistryUsername = null;
+        globalConf.privateRegistryPassword = null;
+    }
 
     var proxy = getProxy();
     if (proxy) {
