@@ -88,7 +88,7 @@ ConfBuilder.processProjectIdentification = function (conf) {
         agentProjectInfo.projectToken = conf.projectToken;
     }
 
-    // if valid token and project name then ignore project name otherwise use it
+    // if valid token and project name then ignore project name otherwise use  it
     if (conf.projectToken && conf.projectName) {
         logger.warn('Can\'t use both project token and project name in configuration, project name will be ignored.');
     } else {
