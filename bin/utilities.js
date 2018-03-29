@@ -76,6 +76,8 @@ Utilities.calculateSha1 = function (file, callback) {
     checksum.file(file, function (err, sha1) {
         if (err) {
             logger.verbose('Unable to calculate sha1 for ' + file + '\n' + err);
+            sha1 = "";
+            callback(sha1);
         } else {
             logger.verbose('file ' + file + ' sha1: ' + sha1);
             callback(sha1);

@@ -22,6 +22,7 @@ var cmdArgs;
 var tmpFolderPath;
 var confFile;
 var globalConf;
+var asyncCounter;
 
 run();
 
@@ -198,7 +199,7 @@ function isPackagePrivateAssetsAll(package) {
 function onReadyLinks(partialRequestBody, projectInfos, downloadLinks) {
     utilities.mkdir(tmpFolderPath);
     var links = Object.keys(downloadLinks);
-    var asyncCounter = links.length; // counter to wait for all async download actions to be done
+    asyncCounter = links.length; // counter to wait for all async download actions to be done
     var dependencies = [];
     var missedDependencies = [];
 
@@ -226,7 +227,7 @@ function onReadyLinks(partialRequestBody, projectInfos, downloadLinks) {
                     sendScanResult(partialRequestBody, projectInfos, dependencies, missedDependencies, onDependenciesReady);
                 }
             } else {
-                createDependencyInfo(partialRequestBody, projectInfos, dependencies, missedDependencies, file, --asyncCounter, onDependenciesReady);
+                createDependencyInfo(partialRequestBody, projectInfos, dependencies, missedDependencies, file, onDependenciesReady);
             }
         });
     }
@@ -235,16 +236,19 @@ function onReadyLinks(partialRequestBody, projectInfos, downloadLinks) {
 /**
  * Once all files downloaded and sha1 calculated send request
  */
-function createDependencyInfo(partialRequestBody, agentProjectInfos, dependencies, missedDependencies, file, asyncDownloadCounter, callback) {
+function createDependencyInfo(partialRequestBody, agentProjectInfos, dependencies, missedDependencies, file, callback) {
     utilities.calculateSha1(file, function (sha1) {
-        var dependency = {
-            'artifactId' : file.substring(file.lastIndexOf('\\') + 1),
-            'sha1' : sha1
-        };
+        if (sha1 != null && sha1 != "") {
+            var dependency = {
+                'artifactId' : file.substring(file.lastIndexOf('\\') + 1),
+                'sha1' : sha1
+            };
 
-        dependencies.push(dependency);
+            dependencies.push(dependency);
+        }
 
-        if (asyncDownloadCounter === 0) {
+        asyncCounter--;
+        if (asyncCounter === 0) {
             sendScanResult(partialRequestBody, agentProjectInfos, dependencies, missedDependencies, callback);
         }
     });
