@@ -134,6 +134,9 @@ function processOrgToken(requestBody, conf) {
         process.exit(0);
     }
     requestBody.token = conf.apiKey;
+    if (conf.userKey){
+        requestBody.userKey = conf.userKey;
+    }
 }
 
 function processProductIdentification(requestBody, conf) {
