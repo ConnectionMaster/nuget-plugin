@@ -392,18 +392,19 @@ var getPolicyRejectionSummary = function (resJson) {
 
 function sendRequestToServer(requestBody, projectInfos, dependencies) {
     var requestBodyStringifiedCheckPolicies = initializeRequestBodyType('CHECK_POLICY_COMPLIANCE', requestBody, projectInfos, dependencies);
+    logger.info("Checking Policies");
     utilities.postRequest(globalConf.wssUrl, 'POST', requestBodyStringifiedCheckPolicies, globalConf.requestAgent, function (responseBody) {
         if (JSON.parse(responseBody).status === 1) {
-            if (confFile.forceCheckAllDependencies) {
-                logger.info("Some dependencies violate open source policies, however all were force " +
-                    "updated to organization inventory.");
-            }
             var violations = getPolicyRejectionSummary(responseBody);
             if (violations != null && violations.length > 0) {
-                logger.info("Some dependencies did not conform with open source policies.");
+                if (confFile.forceCheckAllDependencies) {
+                    logger.error("Some dependencies violate open source policies, however all were force " +
+                        "updated to organization inventory.");
+                } else {
+                    logger.error("Some dependencies did not conform with open source policies.");
+                }
                 logger.debug(JSON.stringify(violations));
-            }
-            else {
+            } else {
                 logger.info("All dependencies conform with open source policies.");
                 if (cmdArgs.action === 'UPDATE') {
                     var requestBodyStringifiedUpdate = initializeRequestBodyType('UPDATE', requestBody, projectInfos, dependencies);
@@ -412,6 +413,9 @@ function sendRequestToServer(requestBody, projectInfos, dependencies) {
                     });
                 }
             }
+        } else {
+            logger.error('Server response: ' + prettyJson.render(JSON.parse(responseBody).data));
+            logger.error("Build failed!");
         }
     });
 }
@@ -420,7 +424,8 @@ function initializeRequestBodyType(type, requestBody, projectInfos, dependencies
     requestBody.type = type;
     projectInfos[0].dependencies = dependencies;
     var requestBodyStringified = queryString.stringify(requestBody);
-    return requestBodyStringified += "&diff=" + JSON.stringify(projectInfos);
+    requestBodyStringified += "&diff=" + JSON.stringify(projectInfos);
+    return requestBodyStringified;
 }
 
 
