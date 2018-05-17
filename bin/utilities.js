@@ -3,7 +3,8 @@
  */
 
 var Utilities = exports;
-exports.constructor = function Utilities() {};
+exports.constructor = function Utilities() {
+};
 
 var fs = require('fs'),
     path = require('path'),
@@ -22,7 +23,7 @@ var logger = null;
  * @returns winston logger object
  */
 Utilities.getLogger = function () {
-    var loggerFormat = function() {
+    var loggerFormat = function () {
         var now = Date.now();
         return dateFormat(now, 'isoDateTime');
     };
@@ -61,7 +62,7 @@ Utilities.mkdir = function (fullPath) {
 };
 
 Utilities.rm = function (path) {
-    var rmOptions = {"disableGlob" : true};
+    var rmOptions = {"disableGlob": true};
     rimraf(path, rmOptions, function (err) {
         if (err) {
             logger.warn('Unable to delete folder ' + path + '\n' + err);
@@ -88,7 +89,7 @@ Utilities.calculateSha1 = function (file, callback) {
 Utilities.downloadFile = function (url, filename, destination, privateRegistryUsername, privateRegistryPassword, callback) {
     var options = {};
     var emptyString = '';
-    if(privateRegistryPassword !== null && privateRegistryPassword !== emptyString) {
+    if (privateRegistryPassword !== null && privateRegistryPassword !== emptyString) {
         var userAndPassAuth = privateRegistryUsername + ":" + privateRegistryPassword;
         options = {
             headers: {
@@ -118,18 +119,21 @@ Utilities.loadJsonFile = function (path) {
     return JSON.parse(file);
 };
 
-Utilities.xmlToJson = function(path, callback) {
+Utilities.xmlToJson = function (path, callback) {
     var xmlFile = fs.readFileSync(path, 'utf8');
     parseString(xmlFile, callback);
 };
 
 Utilities.postRequest = function (url, type, requestBody, requestAgent, onSuccess) {
+
     var options = {
-        url : url,
-        timeout : 300000,
+        url: url,
+        timeout: 300000,
         agent: requestAgent,
-        headers : { 'Charset': 'UTF-8',
-                    'Content-Type': 'application/x-www-form-urlencoded'}
+        headers: {
+            'Charset': 'UTF-8',
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
     };
     if (type === 'POST') {
         options.method = 'post';
@@ -160,7 +164,18 @@ Utilities.postRequest = function (url, type, requestBody, requestAgent, onSucces
 
 Utilities.removeDuplicatePrimitivesFromArray = function (array) {
     var uniqueArray = {};
-    return array.filter(function(item) {
+    return array.filter(function (item) {
         return uniqueArray.hasOwnProperty(item) ? false : (uniqueArray[item] = true);
     });
+};
+
+Utilities.cleanJson = function (toClean) {
+    return toClean.replace(/\\n/g, "\\n")
+        .replace(/\\'/g, "\\'")
+        .replace(/\\"/g, '\\"')
+        .replace(/\\&/g, "\\&")
+        .replace(/\\r/g, "\\r")
+        .replace(/\\t/g, "\\t")
+        .replace(/\\b/g, "\\b")
+        .replace(/\\f/g, "\\f");
 };
