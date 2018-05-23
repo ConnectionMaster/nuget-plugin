@@ -397,12 +397,8 @@ function sendRequestToServer(requestBody, projectInfos, dependencies) {
         if (JSON.parse(responseBody).status === 1) {
             var violations = getPolicyRejectionSummary(responseBody);
             if (violations != null && violations.length > 0) {
-                if (confFile.forceCheckAllDependencies) {
-                    logger.error("Some dependencies violate open source policies, however all were force " +
-                        "updated to organization inventory.");
-                } else {
-                    logger.error("Some dependencies did not conform with open source policies.");
-                }
+                logger.error("Some dependencies did not conform with open source policies, review report for details");
+                logger.error("=== UPDATE ABORTED ===");
                 logger.debug(JSON.stringify(violations));
             } else {
                 logger.info("All dependencies conform with open source policies.");
