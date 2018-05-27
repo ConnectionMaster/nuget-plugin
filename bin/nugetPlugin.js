@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 /**
  * Created by Yossi.Weinberg on 4/28/2017.
  */
