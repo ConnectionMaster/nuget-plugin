@@ -394,6 +394,10 @@ var getPolicyRejectionSummary = function (resJson) {
 function sendRequestToServer(requestBody, projectInfos, dependencies) {
     var requestBodyStringifiedCheckPolicies = initializeRequestBodyType('CHECK_POLICY_COMPLIANCE', requestBody, projectInfos, dependencies);
     logger.info("Checking Policies");
+
+    var retries = globalConf.connectionRetries;
+    var interval = globalConf.connectionRetriesInterval;
+
     utilities.postRequest(globalConf.wssUrl, 'POST', requestBodyStringifiedCheckPolicies, globalConf.requestAgent, function (responseBody) {
         if (JSON.parse(responseBody).status === 1) {
             var violations = getPolicyRejectionSummary(responseBody);
@@ -414,7 +418,7 @@ function sendRequestToServer(requestBody, projectInfos, dependencies) {
             logger.error('Server response: ' + prettyJson.render(JSON.parse(responseBody).data));
             logger.error("Build failed!");
         }
-    });
+    }, true, retries, interval);
 }
 
 function initializeRequestBodyType(type, requestBody, projectInfos, dependencies) {

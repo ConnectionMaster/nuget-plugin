@@ -124,7 +124,13 @@ Utilities.xmlToJson = function (path, callback) {
     parseString(xmlFile, callback);
 };
 
-Utilities.postRequest = function (url, type, requestBody, requestAgent, onSuccess) {
+Utilities.setSleepTimeOut = function(milSeconds)
+{
+    var e = new Date().getTime() + milSeconds;
+    while (new Date().getTime() <= e) {}
+}
+
+Utilities.postRequest = function (url, type, requestBody, requestAgent, onSuccess, retryOnFailure, retries, retriesInterval) {
 
     var options = {
         url: url,
@@ -149,14 +155,24 @@ Utilities.postRequest = function (url, type, requestBody, requestAgent, onSucces
         if (err) {
             logger.error('Http request failed.\n' + err);
         }
-        if (entireResponse) {
-            var statusCode = entireResponse.statusCode;
+        if (entireResponse || retryOnFailure) {
+            var statusCode = entireResponse? entireResponse.statusCode: 443;
             if ((statusCode >= 200 && statusCode < 300) || statusCode === 304) {
                 if (onSuccess) {
                     onSuccess(responseBody);
                 }
             } else {
-                logger.error('Http request failed with statues code: ' + statusCode)
+                if(retryOnFailure === true) {
+                    if(retries-- > -1) {
+                        logger.error("Failed to send request to WhiteSource server");
+                        logger.error("Trying " + (retries + 1) + " more time" + (retries != 0 ? "s" : ""));
+                        Utilities.setSleepTimeOut(retriesInterval*1000);
+                        Utilities.postRequest(url, type, requestBody, requestAgent, onSuccess, retryOnFailure, retries, retriesInterval);
+                    }
+                }
+                else {
+                    logger.error('Http request failed with statues code: ' + statusCode)
+                }
             }
         }
     });
