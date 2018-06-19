@@ -50,6 +50,8 @@ ConfBuilder.createGlobalConfiguration = function (conf) {
         globalConf.requestAgent = new httpsProxyAgent(proxy);
     }
 
+    globalConf.connectionRetries = conf.connectionRetries ? conf.connectionRetries : 1;
+    globalConf.connectionRetriesInterval = conf.connectionRetriesInterval ? conf.connectionRetriesInterval : 3;
 
     logger.debug('Global configuration after validation: ' + JSON.stringify(globalConf));
     return globalConf;
@@ -110,7 +112,7 @@ ConfBuilder.processProjectIdentification = function (conf) {
 ConfBuilder.createPostRequestBody = function (conf, pluginAction) {
     var requestBody = {
         'agent': 'nuget-plugin',
-        'agentVersion': '18.3.2',
+        'agentVersion': '18.6.2',
         'timeStamp': new Date().getTime(),
         'type': pluginAction
     };
