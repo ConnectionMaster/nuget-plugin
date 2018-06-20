@@ -162,11 +162,12 @@ Utilities.postRequest = function (url, type, requestBody, requestAgent, onSucces
                     onSuccess(responseBody);
                 }
             } else {
-                if(retryOnFailure === true) {
-                    if(retries-- > -1) {
+                if(retryOnFailure) {
+                    if(retries > 0) {
                         logger.error("Failed to send request to WhiteSource server");
-                        logger.error("Trying " + (retries + 1) + " more time" + (retries != 0 ? "s" : ""));
+                        logger.error("Trying " + retries + " more time" + (retries != 1 ? "s" : ""));
                         Utilities.setSleepTimeOut(retriesInterval*1000);
+                        retries--;
                         Utilities.postRequest(url, type, requestBody, requestAgent, onSuccess, retryOnFailure, retries, retriesInterval);
                     }
                 }
