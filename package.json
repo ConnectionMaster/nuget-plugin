@@ -28,13 +28,14 @@
     }
   ],
   "dependencies": {
+    "minimist": "1.2.4",
     "checksum": "^0.1.1",
     "command-line-args": "^4.0.7",
     "dateformat": "^2.2.0",
     "download": "^6.2.5",
     "fs": "0.0.1-security",
     "get-proxy": "^2.1.0",
-    "https-proxy-agent": "^2.2.1",
+    "https-proxy-agent": "3.0.1",
     "load-json-file": "^2.0.0",
     "os-tmpdir": "^1.0.2",
     "prettyjson": "^1.2.1",
