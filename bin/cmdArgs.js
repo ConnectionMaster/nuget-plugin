@@ -26,6 +26,7 @@ try {
     process.exit(0);
 }
 
+
 /**
  * Parse and validate cmd args
  * @returns object with all args
