@@ -1,6 +1,6 @@
 {
   "name": "ws-nuget-plugin",
-  "version": "20.3.2",
+  "version": "20.9.2",
   "description": "Whitesource Nuget plugin",
   "preferGlobal": true,
   "bin": {
