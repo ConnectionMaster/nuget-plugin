@@ -36,7 +36,7 @@
     "get-proxy": "^2.1.0",
     "https-proxy-agent": "3.0.1",
     "load-json-file": "^2.0.0",
-    "minimist": "1.2.4",
+    "minimist": "1.2.6",
     "os-tmpdir": "^1.0.2",
     "prettyjson": "^1.2.1",
     "querystring": "^0.2.0",
